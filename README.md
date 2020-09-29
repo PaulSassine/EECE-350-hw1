@@ -1,0 +1,67 @@
+# EECE-350-hw1
+import socket 
+import struct #to convert the time from bytes to tuple
+import functools #to convert the time from tuple to integer
+from datetime import datetime #to convert the time to a readable human format
+
+port = 37 #port of the TIME Protocol (RFC 868)
+receive_buffer_size = 32 #we will receive a 32-Bit unsigned number
+
+#First Server
+
+server1 = "time-e-g.nist.gov"
+
+mysocket1 = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+
+mysocket1.connect((server1 , port))
+
+response_string1 = mysocket1.recv(receive_buffer_size)
+
+mysocket1.close
+
+IPAddr1 = socket.gethostbyname(server1) #to get the IP Address of server 1
+
+print ("The IP Address of the first server is : " , IPAddr1 )
+
+#Second Server
+
+server2 = "time-c-wwv.nist.gov"
+
+mysocket2 = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+
+mysocket2.connect((server2 , port))
+
+response_string2 = mysocket2.recv(receive_buffer_size)
+
+mysocket2.close
+
+IPAddr2 = socket.gethostbyname(server2) #to get the IP Address of server 2
+
+print ("The IP Address of the second server is : " , IPAddr2 )
+
+print (" ")
+
+#Once we connected the socket to port 37, this TIME Protocol (RFC 868) returns a 32-bit 
+#unformatted binary number that represents the time in seconds since January 1, 1900
+
+#Now that we got the time in bytes, we convert it to a tuple using the function below 
+
+A = struct.unpack('!I' , response_string1)
+B = struct.unpack('!I' , response_string2)
+
+#now we need to convert the tuple that we got to an integer using the function below
+
+res1 = functools.reduce(lambda sub, ele: sub * 10 + ele, A) 
+res2 = functools.reduce(lambda sub, ele: sub * 10 + ele, B) 
+
+#the below function gives us the actual date since January 1st 1970, but the 
+#time that we retrieved from the servers is the time in seconds since January 1st 1900
+#so we should deduct 70 years (1970 - 1900) which is around 2208988800 seconds in the function belowe
+print("The current time of the first server is : ", datetime.fromtimestamp(res1 - 2208988800).strftime("%A, %B %d, %Y %I:%M:%S"))
+print("The current time of the second server is : ", datetime.fromtimestamp(res2 - 2208988800).strftime("%A, %B %d, %Y %I:%M:%S"))
+
+print ("")
+
+#Finally, we need to find the time difference between the two times retrieved
+res = res1 - res2 
+print("The time difference (in second(s)) between the two times retrieved is : ", abs(res))
